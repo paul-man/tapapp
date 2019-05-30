@@ -1,4 +1,4 @@
-package com.example.tapapp;
+package com.sackstack.tapapp;
 
 
 import android.support.v7.app.AppCompatActivity;
@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import com.example.tapapp.TapSeekbar;
 
 import com.google.android.gms.ads.MobileAds;
 
@@ -22,7 +20,7 @@ public class MainActivity extends AppCompatActivity {
     private int taps = 0;
     private long lastTapTime = 0;
     private TapSeekbar seekBar;
-
+    private float allowedDeviation = 0.25f;
 
     int minteger = 0;
 
@@ -47,29 +45,41 @@ public class MainActivity extends AppCompatActivity {
 
         if (lastTapTime == 0) {
             lastTapTime = now;
+            TextView startMessage = (TextView) findViewById(
+                    R.id.start_message);
+            startMessage.setText("GO!");
         } else {
             float delay = (float)(lastTapTime - now)/-1000;
-            displayDelay(delay);
-
-            // New average = old average * (n-1)/n + new value /n
-            deviation = deviation * (taps - 1)/taps + delay/taps;
-            displayDeviation(deviation);
+            System.out.println("Interval: " + (float)seekBar.getSeekbarProgress());
+            System.out.println("Selay: " + delay);
+            if (
+                    (float)seekBar.getSeekbarProgress() < (delay - allowedDeviation)
+                    || (float)seekBar.getSeekbarProgress() > (delay + allowedDeviation)) {
+                displayMessage("Off time!");
+            } else {
+                displayMessage("Good!");
+            }
         }
 
         lastTapTime = now;
     }
 
-    private void displayDelay(float number) {
+//    private void displayDelay(float number) {
+//        TextView displayInteger = (TextView) findViewById(
+//                R.id.last_delay_number);
+//        displayInteger.setText("Time since last tap:\n" + number + " seconds");
+//    }
+    private void displayMessage(String msg) {
         TextView displayInteger = (TextView) findViewById(
-                R.id.last_delay_number);
-        displayInteger.setText("Time since last tap:\n" + number + " seconds");
+                R.id.delay_message);
+        displayInteger.setText(msg);
     }
-    private void displayDeviation(float number) {
-        System.out.println("Deviation: " + number);
-        TextView displayInteger = (TextView) findViewById(
-                R.id.deviation_number);
-        displayInteger.setText("Deviation:\n" + number + " seconds");
-    }
+//    private void displayDeviation(float number) {
+//        System.out.println("Deviation: " + number);
+//        TextView displayInteger = (TextView) findViewById(
+//                R.id.deviation_number);
+//        displayInteger.setText("Deviation:\n" + number + " seconds");
+//    }
 }
 
 

@@ -5,75 +5,84 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 android:orientation="vertical"
 android:layout_width="fill_parent"
 android:layout_height="fill_parent">
-<ScrollView android:id="@+id/scrollLayout"
-    android:layout_height="fill_parent"
-    android:layout_width="fill_parent"
-    android:layout_above="@+id/adView">
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="16dp"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        tools:context=".MainActivity">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:text="How well can you keep time?" />
 
-        <SeekBar
-            android:id="@+id/seekBar"
-            android:progressDrawable="@drawable/progress"
-            android:thumb="@drawable/custom_thumb"
-            android:splitTrack="false"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:min="1"
-            android:max="10"
-            android:progress="5"
-            />
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_margin="16dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            tools:context=".MainActivity">
 
-        <TextView
-            android:id="@+id/seekBar_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:text="5 second intervals" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="How well can you keep time?"
+                android:textColor="@color/white" />
 
-        <TextView
-            android:id="@+id/last_delay_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:textSize="30sp"
-            android:textColor="@color/white"
-            android:text="Time since last tap:\n0.000 seconds" />
-        <Button
-            android:id="@+id/tap"
-            android:onClick="sendTap"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@drawable/round_button"
-            android:gravity="center_vertical|center_horizontal"
-            android:text="Tap"
-            android:textColor="#fff" />
-        <TextView
-            android:id="@+id/deviation_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:textSize="30sp"
-            android:textColor="@color/white"
-            android:text="Deviation:\n0.000 seconds" />
-    </LinearLayout>
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:max="10"
+                android:min="1"
+                android:progress="5"
+                android:progressDrawable="@drawable/progress"
+                android:splitTrack="false"
+                android:thumb="@drawable/custom_thumb" />
 
-</ScrollView>
+            <TextView
+                android:id="@+id/seekBar_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5 second interval(s)"
+                android:textColor="@color/white" />
+
+            <TextView
+                android:id="@+id/delay_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/start_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:text=""
+                android:textColor="@color/white"
+                android:textSize="30sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/tap"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_alignParentBottom="true"
+                    android:background="@drawable/round_button"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:onClick="sendTap"
+                    android:text="Tap"
+                    android:textColor="#fff" />
+            </LinearLayout>
+
+        </LinearLayout>
+
     <com.google.android.gms.ads.AdView
         xmlns:ads="http://schemas.android.com/apk/res-auto"
         android:id="@+id/adView"
@@ -82,7 +91,7 @@ android:layout_height="fill_parent">
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+        ads:adUnitId="ca-app-pub-5858630370976483/6913137727">
     </com.google.android.gms.ads.AdView>
     <!-- Real ads: ca-app-pub-5858630370976483/6913137727 -->
     <!-- Test ads: ca-app-pub-3940256099942544/6300978111 -->

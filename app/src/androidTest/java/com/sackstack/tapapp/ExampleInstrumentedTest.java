@@ -1,4 +1,4 @@
-package com.example.tapapp;
+package com.sackstack.tapapp;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.markstapapp", appContext.getPackageName());
+        assertEquals("com.sackstack.markstapapp", appContext.getPackageName());
     }
 }

@@ -1,4 +1,4 @@
-package com.example.tapapp;
+package com.sackstack.tapapp;
 
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -9,13 +9,15 @@ public class TapSeekbar {
     private SeekBar seekBar;
     private View seekBarValue;
     private MainActivity activity;
-
+    private int seekbarProgress = 5;
     public TapSeekbar(SeekBar seekBar, View seekBarValue) {
         this.seekBar = seekBar;
         this.seekBarValue = seekBarValue;
         initSeekbar();
     }
-
+    public int getSeekbarProgress() {
+        return this.seekbarProgress;
+    }
     private void initSeekbar() {
         // perform seek bar change listener event used for getting the progress value
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -23,6 +25,7 @@ public class TapSeekbar {
 
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progressChangedValue = progress;
+                seekbarProgress = progressChangedValue;
                 TextView displayInteger = (TextView) seekBarValue;
                 displayInteger.setText(progressChangedValue + " second intervals");
             }

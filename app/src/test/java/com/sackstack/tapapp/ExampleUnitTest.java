@@ -1,4 +1,4 @@
-package com.example.tapapp;
+package com.sackstack.tapapp;
 
 import org.junit.Test;
 
