@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/colorPrimaryDark"
-android:orientation="vertical"
-android:layout_width="fill_parent"
-android:layout_height="fill_parent">
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
 
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -21,21 +21,26 @@ android:layout_height="fill_parent">
                 android:layout_height="wrap_content"
                 android:text="How well can you keep time?"
                 android:textColor="@color/white" />
-
-            <SeekBar
-                android:id="@+id/seekBar"
-                android:layout_width="fill_parent"
+            <com.mohammedalaa.seekbar.RangeSeekBarView
+                android:id="@+id/range_seekbar"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:max="200"
-                android:min="50"
-                android:progress="60"/>
+                app:barHeight="@dimen/value_bar_barHeight"
+                app:baseColor="@color/navy"
+                app:circleRadius="@dimen/value_bar_circleRadius"
+                app:circleTextColor="@color/white"
+                app:circleTextSize="@dimen/value_bar_circleTextSize"
+                app:fillColor="@color/red"
+                app:currentValue="90"
+                app:minValue="30"
+                app:maxValue="180"
+                app:stepValue="5"
+            />
+
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal" >
-
-
                 <TextView
                     android:id="@+id/bpm_value"
                     android:layout_width="fill_parent"
@@ -52,7 +57,6 @@ android:layout_height="fill_parent">
                     android:gravity="left"
                     android:text="bpm"
                     android:textSize="40dp"/>
-
             </LinearLayout>
 
             <TextView
