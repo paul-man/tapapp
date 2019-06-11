@@ -17,3 +17,13 @@ This page is just a place for me to keep track of useful blog posts/stackoverflo
     }
     ```
 _____
+
+### Fancy Dialog Boxes
+- Currently I am using [EZDialog](https://android-arsenal.com/details/1/7610) for my dialogs
+  - Main issue is that I can only put a string inside the dialog content
+- Let's try DialogPlus
+  - It allows you to pass a view in to use as the content of the dialog
+  - It also allows you to use animations for dialog opening/closing
+  - [Github](https://github.com/orhanobut/dialogplus?utm_source=android-arsenal.com&utm_medium=referral&utm_campaign=1413)
+  - [Android-arsenal](https://android-arsenal.com/details/1/1413)
+  
