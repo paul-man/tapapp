@@ -27,3 +27,16 @@ _____
   - [Github](https://github.com/orhanobut/dialogplus?utm_source=android-arsenal.com&utm_medium=referral&utm_campaign=1413)
   - [Android-arsenal](https://android-arsenal.com/details/1/1413)
   
+_____
+
+### Logging in Android Studio
+The main options are:
+  - DEBUG: Log.d
+  - ERROR: Log.e
+  - INFO: Log.i
+  - VERBOSE: Log.v
+  - WARN: Log.w
+  
+Examle: `Log.d("myTag", "This is my message");`
+
+- https://stackoverflow.com/questions/16780294/how-to-print-to-the-console-in-android-studio
