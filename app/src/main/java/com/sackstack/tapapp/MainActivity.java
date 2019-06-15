@@ -1,33 +1,15 @@
 package com.sackstack.tapapp;
-
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.TypedValue;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.webkit.WebView;
-import android.widget.Button;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.google.android.gms.ads.MobileAds;
-
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-//import com.pranavpandey.android.dynamic.dialogs.DynamicDialog;
 import com.warkiz.widget.IndicatorSeekBar;
-import com.warkiz.widget.OnSeekChangeListener;
-import com.warkiz.widget.SeekParams;
-import android.graphics.Color;
-import java.util.Map;
-
+import java.util.Timer;
+import java.util.TimerTask;
 import spencerstudios.com.ezdialoglib.EZDialog;
 import spencerstudios.com.ezdialoglib.EZDialogListener;
 
@@ -36,33 +18,50 @@ public class MainActivity extends AppCompatActivity {
     private int tapCount = 0;
     private long lastTapTime = 0;
     private long originalTapTime = 0;
-    private float allowedDeviation = 0.25f * 1000;
-    private IndicatorSeekBar seekBar;
-    private AlphaAnimation indicatorFadeAnim;
+    public double gracePeriod;
+    private SeekBar seekBar;
     private boolean gameOver = false;
-    private boolean appStart = false;
+    public boolean appStart = false;
     private TextView tapCountView;
-    private int maxTaps = 0;
-    private int maxBPM = 0;
-    private int maxTapsCBPM = 0;
-    private int maxBPMCTaps = 0;
     private boolean seekBarMovement = false;
     private TextView tapBtn;
-    private boolean newHighScoreBPM = false;
-    private boolean newHighScoreTaps = false;
     private boolean stopHelping = false;
     private int handHoldingTime = 5;
+    private UserScores scores;
+    private Timer tapTimer;
+    public double aCurve = 0;
+    public double bCurve = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Difficulty difficulty = Difficulty.EASY;
+        scores = new UserScores(MainActivity.this);
+        seekBar = new SeekBar((IndicatorSeekBar) findViewById(R.id.seekBar), MainActivity.this);
+        initCurveAlgo(difficulty, seekBar.getMax(), seekBar.getMin());
+        gracePeriod = getGracePeriod(seekBar.getProgress());
+//        scores.clearScores();
         initViews();
-        initSeekBar();
-        initBPMPreviewAnimation();
         initAds();
-
         startupDialog();
+    }
+    public int getGracePeriod(int bpm) {
+        if (aCurve == 0 || bCurve == 0) {
+            return 0;
+        }
+        return (int) (aCurve * Math.pow(bCurve, bpm));
+    }
+
+    public void initCurveAlgo(Difficulty diff, int maxBPM, int minBPM) {
+        Log.i("CURVE","maxBPM: " + maxBPM);
+        Log.i("CURVE","minBPM: " + minBPM);
+        Log.i("CURVE","diff.getMaxGrace(): " + diff.getMaxGrace());
+        Log.i("CURVE","diff.getMinGrace(): " + diff.getMinGrace());
+        bCurve = Math.pow(1.0 / (diff.getMaxGrace() / diff.getMinGrace()), 1.0/(maxBPM - minBPM));
+        aCurve = diff.getMaxGrace() / Math.pow(bCurve, minBPM);
+        Log.i("CURVE","bCurve: " + bCurve);
+        Log.i("CURVE","aCurve: " + aCurve);
     }
 
     public void showScores(View view) {
@@ -80,59 +79,23 @@ public class MainActivity extends AppCompatActivity {
         tapCount = 0;
         lastTapTime = 0;
         originalTapTime = 0;
-        maxTaps = 0;
-        maxBPM = 0;
-        maxTapsCBPM = 0;
-        maxBPMCTaps = 0;
+        scores.setMaxTaps(0);
+        scores.setMaxBPM(0);
+        scores.setMaxTapsCBPM(0);
+        scores.setMaxBPMCTaps(0);
+        scores.setNewHighScoreBPM(false);
+        scores.setNewHighScoreTaps(false);
         seekBarMovement = false;
-        newHighScoreBPM = false;
-        newHighScoreTaps = false;
         stopHelping = false;
         handHoldingTime = 5;
         seekBar.setEnabled(true);
-        setClassHighScores();
+        scores.setClassHighScores();
         tapCountView.setText("0");
-        restartIndicatorAnim();
+        seekBar.restartIndicatorAnim();
     }
 
-    private void initSeekBar() {
-        seekBar = (IndicatorSeekBar) findViewById(R.id.seekBar);
-        seekBar.setIndicatorTextFormat("${PROGRESS} BPM");
-        seekBar.setOnSeekChangeListener(new OnSeekChangeListener() {
-            @Override
-            public void onSeeking(SeekParams seekParams) {
-                System.out.println(seekParams.progress);
-                manageBlinkEffect(getBPMInMilli());
-            }
-            @Override
-            public void onStartTrackingTouch(IndicatorSeekBar seekBar) {
-                seekBarMovement = true;
-                pauseIndicatorAnim();
-            }
-            @Override
-            public void onStopTrackingTouch(IndicatorSeekBar seekBar) {
-                seekBarMovement = false;
-                seekBar.getIndicator().getContentView().getAnimation().reset();
-                manageBlinkEffect(getBPMInMilli());
-            }
-        });
-    }
 
-    private void pauseIndicatorAnim() {
-        seekBar.getIndicator().getContentView().getAnimation().reset();
-        seekBar.getIndicator().getContentView().getAnimation().setDuration(Integer.MAX_VALUE);
-    }
-    private void restartIndicatorAnim() {
-        seekBar.getIndicator().getContentView().getAnimation().reset();
-        manageBlinkEffect(getBPMInMilli());
-    }
 
-    private void initBPMPreviewAnimation() {
-        indicatorFadeAnim = new AlphaAnimation(1.0f, 0.0f);
-        indicatorFadeAnim.setDuration(getBPMInMilli());
-        indicatorFadeAnim.setRepeatCount(Animation.INFINITE);
-        indicatorFadeAnim.setRepeatMode(Animation.REVERSE);
-    }
 
     private void initAds() {
         MobileAds.initialize(this,"ca-app-pub-5858630370976483~8800934464");
@@ -144,13 +107,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startupDialog() {
-        setClassHighScores();
+        scores.setClassHighScores();
         String scoreMsg = "";
-        if (maxBPM == 0 && maxTaps == 0) {
+        if (scores.getMaxBPM() == 0 && scores.getMaxTaps() == 0) {
             scoreMsg = "No Scores yet!";
         } else {
-            scoreMsg = "Best BPM:\n" + maxBPM + " with " + maxTaps + " taps\n";
-            scoreMsg += "Best Taps:\n" + maxTaps + " at " + maxBPM + " BPM\n";
+            scoreMsg = "Best BPM:\n" + scores.getMaxBPM() + " with " + scores.getMaxTaps() + " taps\n";
+            scoreMsg += "Best Taps:\n" + scores.getMaxTaps() + " at " + scores.getMaxBPM() + " BPM\n";
         }
 
         new EZDialog.Builder(this)
@@ -161,32 +124,22 @@ public class MainActivity extends AppCompatActivity {
             .OnPositiveClicked(new EZDialogListener() {
                 @Override
                 public void OnClick() {
-                    manageBlinkEffect(getBPMInMilli());
+                    seekBar.manageBlinkEffect();
                 }
             })
                 .setBackgroundColor(getResources().getColor(R.color.splash_blue))
             .build();
     }
 
-    private void manageBlinkEffect(int progress) {
-        if (seekBarMovement) {
-            return;
-        }
-        long duration = progress / 2;
-        if (!appStart){
-            appStart = true;
-            indicatorFadeAnim.setDuration(duration);
-            seekBar.getIndicator().getContentView().startAnimation(indicatorFadeAnim);
-        } else {
-            seekBar.getIndicator().getContentView().getAnimation().setDuration(duration);
-        }
-    }
 
     public void sendTap(View view) {
         if (gameOver) {
             return;
         }
+        int milliBPM = seekBar.getBPMInMilli();
+        gracePeriod = getGracePeriod(seekBar.getProgress());
         long now = System.currentTimeMillis();
+        float tapDelay = (float)(now - lastTapTime);
         tapCount++;
 
         if (lastTapTime == 0) {
@@ -194,27 +147,48 @@ public class MainActivity extends AppCompatActivity {
             seekBar.setEnabled(false);
             tapBtn.setText("Tap!");
         } else {
-            int milliBPM = getBPMInMilli();
-            float delay = (float)(now - lastTapTime);
-            if ( (float)milliBPM < (delay - allowedDeviation) || (float)milliBPM > (delay + allowedDeviation)) {
-                gameOver();
+            if ( tapDelay < ((float)milliBPM - gracePeriod)) {// || (float)milliBPM > (delay + allowedDeviation)) {
+                gameOver("fast");
+                return;
             }
-            logTapData(milliBPM, delay);
         }
         if (!stopHelping && (now - originalTapTime) / 1000 > handHoldingTime) {
             stopHelping = true;
-            pauseIndicatorAnim();
+            seekBar.pauseIndicatorAnim();
         }
+        logTapData(milliBPM, tapDelay);
         tapCountView.setText(Integer.toString(tapCount));
         lastTapTime = now;
+        restartTapTimer((int)(milliBPM + gracePeriod));
+
+        Log.i("TIMERDELAY", "milliBPM: " + milliBPM + " graceperiod: " + gracePeriod);
+    }
+
+    public void restartTapTimer(int delay) {
+        TimerTask tooSlowTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        gameOver("slow");
+                    }
+                });
+            }
+        };
+        if (tapTimer != null) {
+            tapTimer.cancel();
+        }
+        tapTimer = new Timer();
+        tapTimer.schedule(tooSlowTimerTask, delay);
     }
 
     private void logTapData(int progress, float delay) {
-        System.out.println("Interval: " + (float)progress);
-        System.out.println("delay: " + delay);
-        System.out.println("min: " + (delay - allowedDeviation));
-        System.out.println("max: " + (delay + allowedDeviation));
-        System.out.println("allowedDeviation: " + allowedDeviation);
+        Log.i("TAPDATA", "Interval: " + (float)progress);
+        Log.i("TAPDATA", "delay: " + delay);
+        Log.i("TAPDATA", "min: " + (delay - gracePeriod));
+        Log.i("TAPDATA", "max: " + (delay + gracePeriod));
+        Log.i("TAPDATA", "allowedDeviation: " + gracePeriod);
+        Log.i("TAPDATA", "grace: " + gracePeriod);
     }
 
     private void displayMessage(String msg) {
@@ -223,24 +197,17 @@ public class MainActivity extends AppCompatActivity {
         displayInteger.setText(msg);
     }
 
-    private int getBPMInMilli() {
-        System.out.println(seekBar.getProgress());
-        return (int) ((60.0 / seekBar.getProgress()) * 1000);
-    }
-
-    private void initSeekBarChangeListener() {
-
-    }
-
-    private void gameOver() {
+    private void gameOver(String reason) {
         gameOver = true;
-        int bpm = seekBar.getProgress();
-        int score = tapCount;
+        tapTimer = null;
+        int bpmScore = seekBar.getProgress();
+        int tapScore = tapCount;
         String gameOverMsg = "";
-        int prevBPMScore = getBPMScore(bpm);
+        int prevBPMScore = scores.getBPMScore(bpmScore);
+        int prevTapScore = scores.getTapScore(tapScore);
         if (score > prevBPMScore) {
-            saveScore(bpm, score);
-            newHighScoreBPM = true;
+            scores.saveScore(bpm, score);
+            scores.setNewHighScoreBPM(true);
         }
 
         EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
@@ -254,49 +221,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             })
             .setBackgroundColor(getResources().getColor(R.color.splash_blue));
-        if (newHighScoreBPM) {
+        if (scores.isNewHighScoreBPM()) {
             gameOverMsg += "New high score for this BPM!\n";
         }
-        if (newHighScoreTaps) {
+        if (scores.isNewHighScoreTaps()) {
             gameOverMsg += "New high score for this amount of taps!\n";
         }
         dialogBuilder.setMessage(gameOverMsg);
         ((EZDialog.Builder) dialogBuilder).build();
-    }
-
-    private int getBPMScore(int bpm) {
-        String bpmKey = Integer.toString(bpm);
-        SharedPreferences prefs = this.getSharedPreferences("userScores", Context.MODE_PRIVATE);
-        return prefs.getInt(bpmKey,0);
-    }
-
-    private void saveScore(int bpm, int score) {
-        String bpmKey = Integer.toString(bpm);
-        SharedPreferences prefs = this.getSharedPreferences("userScores", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(bpmKey, score);
-        editor.commit();
-    }
-
-    private void setClassHighScores() {
-        maxTaps = 0;
-        maxBPM = 0;
-        maxTapsCBPM = 0;
-        maxBPMCTaps = 0;
-        SharedPreferences prefs = this.getSharedPreferences("userScores", Context.MODE_PRIVATE);
-        Map<String, ?> allEntries = prefs.getAll();
-        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
-            int bpm = Integer.parseInt(entry.getKey());
-            int taps = Integer.parseInt(entry.getValue().toString());
-            if (bpm > maxBPM) {
-                maxBPM = bpm;
-                maxBPMCTaps = taps;
-            }
-            if (taps > maxTaps) {
-                maxTaps = taps;
-                maxTapsCBPM = bpm;
-            }
-        }
     }
 }
 
