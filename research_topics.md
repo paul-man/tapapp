@@ -117,3 +117,9 @@ so... y = 478.325(0.991)<sup>x</sup>
 Now we can create a function that performs this whole operation at app runtime for each difficulty and store a and b.
 
 Then each time the user changes the BPM, we plug it in as x and solve for y and that is the new grace period.
+
+_____
+
+### Playing sound on "Tap"
+https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
+https://freesound.org/search/?q=metronome&f=&s=duration+asc&advanced=0&g=1
