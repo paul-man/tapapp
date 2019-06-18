@@ -124,3 +124,22 @@ _____
 https://stackoverflow.com/questions/18459122/play-sound-on-button-click-android
 
 https://freesound.org/search/?q=metronome&f=&s=duration+asc&advanced=0&g=1
+
+_____
+
+### Displaying duration based on milliseconds
+https://repl.it/repls/KhakiShadowyConditionals
+
+```
+import java.util.concurrent.TimeUnit;
+class Main {
+  public static void main(String[] args) {
+    long millis = 36350;
+    String hms = String.format("%02dm:%02ds:%02dms",
+            TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+            TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)),
+            millis % 1000);
+    System.out.println(hms); 
+  }
+}
+```
