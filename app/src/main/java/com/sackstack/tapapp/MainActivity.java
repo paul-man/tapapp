@@ -1,4 +1,6 @@
 package com.sackstack.tapapp;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -6,18 +8,20 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.levitnudi.legacytableview.LegacyTableView;
-import com.orhanobut.dialogplus.DialogPlus;
-import com.orhanobut.dialogplus.ViewHolder;
 import com.warkiz.widget.IndicatorSeekBar;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import spencerstudios.com.ezdialoglib.EZDialog;
+import spencerstudios.com.ezdialoglib.EZDialogListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,12 +42,12 @@ public class MainActivity extends AppCompatActivity {
     public double aCurve = 0;
     public double bCurve = 0;
     private Difficulty difficulty;
-    private LegacyTableView table;
+    private Spinner difficultySpinner;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        difficulty = Difficulty.EASY;
+        initDifficulty();
         scores = new UserScores(MainActivity.this);
         seekBar = new SeekBar((IndicatorSeekBar) findViewById(R.id.seekBar), MainActivity.this);
         initCurveAlgo(difficulty, seekBar.getMax(), seekBar.getMin());
@@ -52,6 +56,29 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         initAds();
         startupDialog();
+    }
+
+    public void initDifficulty() {
+        SharedPreferences prefs = this.getSharedPreferences("com.sackstack.settings", Context.MODE_PRIVATE);
+        String difficultyLabel = prefs.getString("difficulty","easy");
+        int index = 0;
+        switch (difficultyLabel) {
+            case "easy":
+                index = 0;
+                this.difficulty = Difficulty.EASY;
+                break;
+            case "normal":
+                index = 1;
+                this.difficulty = Difficulty.NORMAL;
+                break;
+            case "hard":
+                index = 2;
+                this.difficulty = Difficulty.HARD;
+                break;
+        }
+        difficultySpinner = findViewById(R.id.difficulty_spinner);
+        difficultySpinner.setSelection(index);
+        initDifficultySpinner();
     }
     public int getGracePeriod(int bpm) {
         if (aCurve == 0 || bCurve == 0) {
@@ -71,8 +98,42 @@ public class MainActivity extends AppCompatActivity {
         Log.i("CURVE","aCurve: " + aCurve);
     }
 
+    private void initDifficultySpinner() {
+        difficultySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0: // EASY
+                        changeDifficulty(Difficulty.EASY);
+                        break;
+                    case 1: // NORMAL
+                        changeDifficulty(Difficulty.NORMAL);
+                        break;
+                    case 2: // HARD
+                        changeDifficulty(Difficulty.HARD);
+                        break;
+                }
+                Log.i("SPINNER", "Difficulty: " + difficulty.getLabel());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+    }
+    public void changeDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+        SharedPreferences prefs = this.getSharedPreferences("com.sackstack.settings", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("difficulty", difficulty.getLabel());
+        editor.commit();
+        initCurveAlgo(difficulty, seekBar.getMax(), seekBar.getMin());
+        gracePeriod = getGracePeriod(seekBar.getProgress());
+    }
     public void showScores(View view) {
         restartGame(null);
+        seekBar.pauseIndicatorAnim();
         startupDialog();
     }
 
@@ -105,40 +166,35 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         adView.loadAd(adRequest);
     }
+    private String capitalize(final String line) {
+        return Character.toUpperCase(line.charAt(0)) + line.substring(1);
+    }
 
     private void startupDialog() {
-        String scoreMsg = "";
-        View layoutScrollTable = LayoutInflater.from(this).inflate(R.layout.layout_score_table, null);
-        LegacyTableView.insertLegacyTitle("Id", "Name", "Age", "Email");
-        String[] title = {"Id", "Name", "Age", "Email"};
-        //set table contents as string arrays
-        LegacyTableView.insertLegacyContent("2999010", "John Deer", "50", "john@example.com",
-                "332312", "Kennedy F", "33", "ken@example.com"
-                ,"42343243", "Java Lover", "28", "Jlover@example.com"
-                ,"4288383", "Mike Tee", "22", "miket@example.com");
+        int[] maxBPMResults = scores.getMaxBPM(difficulty.getLabel());
+        int[] maxTapsResults = scores.getMaxTaps(difficulty.getLabel());
+        String scoreMsg = capitalize(difficulty.getLabel())+"\n\n";
+        if (maxBPMResults[0] == -1 || maxTapsResults[0] == -1) {
+            scoreMsg += "No Scores yet!";
+        } else {
+            scoreMsg += "Best BPM:\n" + maxBPMResults[0] + " with " + maxBPMResults[1] + " taps\n";
+            scoreMsg += "Best Taps:\n" + maxTapsResults[1] + " at " + maxTapsResults[0] + " BPM\n";
+        }
 
-        LegacyTableView legacyTableView = (LegacyTableView)layoutScrollTable.findViewById(R.id.legacy_table_view);
-        legacyTableView.setTitle(title);
-        legacyTableView.setContent(LegacyTableView.readLegacyContent());
-        legacyTableView.build();
-        DialogPlus dialog = DialogPlus.newDialog(this)
-                .setContentHolder(new ViewHolder(layoutScrollTable))
-                .setGravity(Gravity.CENTER)
-                .create();
-        dialog.show();
-//        new EZDialog.Builder(this)
-//            .setTitle("How well can you keep time?")
-//            .setMessage(scoreMsg)
-//            .setPositiveBtnText("Start Tapping!")
-//            .setCancelableOnTouchOutside(false)
-//            .OnPositiveClicked(new EZDialogListener() {
-//                @Override
-//                public void OnClick() {
-//                    seekBar.manageBlinkEffect();
-//                }
-//            })
-//                .setBackgroundColor(getResources().getColor(R.color.splash_blue))
-//            .build();
+
+        new EZDialog.Builder(this)
+                .setTitle("How well can you keep time?")
+                .setMessage(scoreMsg)
+                .setPositiveBtnText("Start Tapping!")
+                .setCancelableOnTouchOutside(false)
+                .OnPositiveClicked(new EZDialogListener() {
+                    @Override
+                    public void OnClick() {
+                        seekBar.manageBlinkEffect();
+                    }
+                })
+                .setBackgroundColor(getResources().getColor(R.color.splash_blue))
+                .build();
     }
 
 
@@ -201,36 +257,36 @@ public class MainActivity extends AppCompatActivity {
         Log.i("TAPDATA", "grace: " + gracePeriod);
     }
 
-    private void displayMessage(String msg) {
-        TextView displayInteger = (TextView) findViewById(
-                R.id.delay_message);
-        displayInteger.setText(msg);
-    }
-
     private void gameOver(String reason) {
         gameOver = true;
+        try {
+            tapTimer.cancel();
+        } catch (Exception e) {
+            Log.e("GAMEOVER", "Error cancelling tapTimer");
+        }
         tapTimer = null;
+        seekBar.pauseIndicatorAnim();
         boolean isHighScore;
         String gameOverMsg = "";
         int result = scores.addScore(seekBar.getProgress(), tapCount, difficulty.getLabel());
         isHighScore = (result == 1);
 
-//        EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
-//            .setTitle("Off time!")
-//            .setPositiveBtnText("Try again?")
-//            .setCancelableOnTouchOutside(false)
-//            .OnPositiveClicked(new EZDialogListener() {
-//                @Override
-//                public void OnClick() {
-//                    restartGame(null);
-//                }
-//            })
-//            .setBackgroundColor(getResources().getColor(R.color.splash_blue));
-//        if (isHighScore) {
-//            gameOverMsg += "New high score!\n";
-//        }
-//        dialogBuilder.setMessage(gameOverMsg);
-//        ((EZDialog.Builder) dialogBuilder).build();
+        EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
+            .setTitle("Off time!")
+            .setPositiveBtnText("Try again?")
+            .setCancelableOnTouchOutside(false)
+            .OnPositiveClicked(new EZDialogListener() {
+                @Override
+                public void OnClick() {
+                    restartGame(null);
+                }
+            })
+            .setBackgroundColor(getResources().getColor(R.color.splash_blue));
+        if (isHighScore) {
+            gameOverMsg += "New high score for "+seekBar.getProgress()+" bpm!\n";
+        }
+        dialogBuilder.setMessage(gameOverMsg);
+        ((EZDialog.Builder) dialogBuilder).build();
     }
 }
 

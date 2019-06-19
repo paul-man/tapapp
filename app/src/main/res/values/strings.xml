@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">The Tap App</string>
+    <string-array name="difficulties">
+        <item>Easy</item>
+        <item>Normal</item>
+        <item>Hard</item>
+    </string-array>
 </resources>

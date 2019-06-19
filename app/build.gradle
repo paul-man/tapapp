@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     buildToolsVersion "28.0.3"
     defaultConfig {
-        applicationId "com.sackstack.tapapp_dev"
+        applicationId "com.sackstack.tapapp"
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 6
@@ -41,6 +41,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:17.1.1'
     implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
     implementation 'com.github.manojbhadane:QButton:v1.3'
-    implementation 'com.github.levitnudi:LegacyTableView:1.2'
-    implementation 'com.orhanobut:dialogplus:1.11@aar'
+    implementation 'com.github.Binary-Finery:EZDialog:1.0.4'
 }

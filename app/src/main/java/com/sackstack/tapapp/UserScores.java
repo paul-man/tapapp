@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.Arrays;
+
 /**
  * Help from: https://github.com/mitchtabian/SaveReadWriteDeleteSQLite/blob/master/SaveAndDisplaySQL/app/src/main/java/com/tabian/saveanddisplaysql/DatabaseHelper.java
  */
@@ -43,7 +45,7 @@ public class UserScores extends SQLiteOpenHelper {
             newdb = this.getWritableDatabase();
         }
 
-        String createTable = "CREATE TABLE " + TABLE_NAME + " (" +
+        String createTable = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                 COL_BPM + " INTEGER NOT NULL, " +
                 COL_TAPS + " INTEGER NOT NULL, " +
                 COL_TIME + " INTEGER NOT NULL, " +
@@ -77,6 +79,43 @@ public class UserScores extends SQLiteOpenHelper {
         } else {
             return 1;
         }
+    }
+
+    public int[] getMaxBPM(String difficulty) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor data = null;
+        int taps = -1;
+        int[] result = new int[2];
+        Arrays.fill(result, -1);
+        String query = "SELECT * FROM "+TABLE_NAME+" WHERE bpm = (SELECT max(bpm) FROM "+TABLE_NAME+") AND difficulty = \""+difficulty+"\"";
+            data = db.rawQuery(query, null);
+            if(data.getCount() > 0) {
+                data.moveToFirst();
+                result[0] = data.getInt(data.getColumnIndex("bpm"));
+                result[1] = data.getInt(data.getColumnIndex("taps"));
+                return result;
+            }
+            return result;
+
+    }
+
+    public int[] getMaxTaps(String difficulty) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor data = null;
+        int taps = -1;
+        int[] result = new int[2];
+        Arrays.fill(result, -1);
+        String query = "SELECT * FROM "+TABLE_NAME+" WHERE taps = (SELECT max(taps) FROM "+TABLE_NAME+") AND difficulty = \""+difficulty+"\"";
+
+            data = db.rawQuery(query, null);
+            if(data.getCount() > 0) {
+                data.moveToFirst();
+                result[0] = data.getInt(data.getColumnIndex("bpm"));
+                result[1] = data.getInt(data.getColumnIndex("taps"));
+                return result;
+            }
+            return result;
+
     }
 
     /**
