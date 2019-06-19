@@ -1,24 +1,34 @@
 package com.sackstack.tapapp;
-import android.content.Context;
-import android.content.SharedPreferences;
+
+// Java imports
+import java.util.Timer;
+import java.util.TimerTask;
 import android.support.v7.app.AppCompatActivity;
+
+// Android imports
 import android.os.Bundle;
 import android.util.Log;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+
+// 3rd party imports
 import com.warkiz.widget.IndicatorSeekBar;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import spencerstudios.com.ezdialoglib.EZDialog;
 import spencerstudios.com.ezdialoglib.EZDialogListener;
@@ -26,23 +36,24 @@ import spencerstudios.com.ezdialoglib.EZDialogListener;
 public class MainActivity extends AppCompatActivity {
 
     private int tapCount = 0;
+    private int handHoldingTime = 5;
     private long lastTapTime = 0;
     private long originalTapTime = 0;
     public double gracePeriod;
-    private SeekBar seekBar;
-    private boolean gameOver = false;
-    public boolean appStart = false;
-    private TextView tapCountView;
-    private boolean seekBarMovement = false;
-    private TextView tapBtn;
-    private boolean stopHelping = false;
-    private int handHoldingTime = 5;
-    private UserScores scores;
-    private Timer tapTimer;
     public double aCurve = 0;
     public double bCurve = 0;
+    private boolean gameOver = false;
+    public boolean appStart = false;
+    private boolean seekBarMovement = false;
+    private boolean stopHelping = false;
+    private TextView tapBtn;
+    private TextView tapCountView;
+    private Timer tapTimer;
+    private UserScores scores;
+    private SeekBar seekBar;
     private Difficulty difficulty;
     private Spinner difficultySpinner;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void initDifficulty() {
         SharedPreferences prefs = this.getSharedPreferences("com.sackstack.settings", Context.MODE_PRIVATE);
-        String difficultyLabel = prefs.getString("difficulty","easy");
+        String difficultyLabel = prefs.getString("difficulty", "easy");
         int index = 0;
         switch (difficultyLabel) {
             case "easy":
