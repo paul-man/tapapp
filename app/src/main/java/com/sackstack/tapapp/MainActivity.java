@@ -2,16 +2,22 @@ package com.sackstack.tapapp;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.levitnudi.legacytableview.LegacyTableView;
+import com.orhanobut.dialogplus.DialogPlus;
+import com.orhanobut.dialogplus.ViewHolder;
 import com.warkiz.widget.IndicatorSeekBar;
 import java.util.Timer;
 import java.util.TimerTask;
-import spencerstudios.com.ezdialoglib.EZDialog;
-import spencerstudios.com.ezdialoglib.EZDialogListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,12 +37,13 @@ public class MainActivity extends AppCompatActivity {
     private Timer tapTimer;
     public double aCurve = 0;
     public double bCurve = 0;
-
+    private Difficulty difficulty;
+    private LegacyTableView table;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Difficulty difficulty = Difficulty.EASY;
+        difficulty = Difficulty.EASY;
         scores = new UserScores(MainActivity.this);
         seekBar = new SeekBar((IndicatorSeekBar) findViewById(R.id.seekBar), MainActivity.this);
         initCurveAlgo(difficulty, seekBar.getMax(), seekBar.getMin());
@@ -79,17 +86,10 @@ public class MainActivity extends AppCompatActivity {
         tapCount = 0;
         lastTapTime = 0;
         originalTapTime = 0;
-        scores.setMaxTaps(0);
-        scores.setMaxBPM(0);
-        scores.setMaxTapsCBPM(0);
-        scores.setMaxBPMCTaps(0);
-        scores.setNewHighScoreBPM(false);
-        scores.setNewHighScoreTaps(false);
         seekBarMovement = false;
         stopHelping = false;
         handHoldingTime = 5;
         seekBar.setEnabled(true);
-        scores.setClassHighScores();
         tapCountView.setText("0");
         seekBar.restartIndicatorAnim();
     }
@@ -107,28 +107,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startupDialog() {
-        scores.setClassHighScores();
         String scoreMsg = "";
-        if (scores.getMaxBPM() == 0 && scores.getMaxTaps() == 0) {
-            scoreMsg = "No Scores yet!";
-        } else {
-            scoreMsg = "Best BPM:\n" + scores.getMaxBPM() + " with " + scores.getMaxTaps() + " taps\n";
-            scoreMsg += "Best Taps:\n" + scores.getMaxTaps() + " at " + scores.getMaxBPM() + " BPM\n";
-        }
+        View layoutScrollTable = LayoutInflater.from(this).inflate(R.layout.layout_score_table, null);
+        LegacyTableView.insertLegacyTitle("Id", "Name", "Age", "Email");
+        String[] title = {"Id", "Name", "Age", "Email"};
+        //set table contents as string arrays
+        LegacyTableView.insertLegacyContent("2999010", "John Deer", "50", "john@example.com",
+                "332312", "Kennedy F", "33", "ken@example.com"
+                ,"42343243", "Java Lover", "28", "Jlover@example.com"
+                ,"4288383", "Mike Tee", "22", "miket@example.com");
 
-        new EZDialog.Builder(this)
-            .setTitle("How well can you keep time?")
-            .setMessage(scoreMsg)
-            .setPositiveBtnText("Start Tapping!")
-            .setCancelableOnTouchOutside(false)
-            .OnPositiveClicked(new EZDialogListener() {
-                @Override
-                public void OnClick() {
-                    seekBar.manageBlinkEffect();
-                }
-            })
-                .setBackgroundColor(getResources().getColor(R.color.splash_blue))
-            .build();
+        LegacyTableView legacyTableView = (LegacyTableView)layoutScrollTable.findViewById(R.id.legacy_table_view);
+        legacyTableView.setTitle(title);
+        legacyTableView.setContent(LegacyTableView.readLegacyContent());
+        legacyTableView.build();
+        DialogPlus dialog = DialogPlus.newDialog(this)
+                .setContentHolder(new ViewHolder(layoutScrollTable))
+                .setGravity(Gravity.CENTER)
+                .create();
+        dialog.show();
+//        new EZDialog.Builder(this)
+//            .setTitle("How well can you keep time?")
+//            .setMessage(scoreMsg)
+//            .setPositiveBtnText("Start Tapping!")
+//            .setCancelableOnTouchOutside(false)
+//            .OnPositiveClicked(new EZDialogListener() {
+//                @Override
+//                public void OnClick() {
+//                    seekBar.manageBlinkEffect();
+//                }
+//            })
+//                .setBackgroundColor(getResources().getColor(R.color.splash_blue))
+//            .build();
     }
 
 
@@ -200,35 +210,27 @@ public class MainActivity extends AppCompatActivity {
     private void gameOver(String reason) {
         gameOver = true;
         tapTimer = null;
-        int bpmScore = seekBar.getProgress();
-        int tapScore = tapCount;
+        boolean isHighScore;
         String gameOverMsg = "";
-        int prevBPMScore = scores.getBPMScore(bpmScore);
-        int prevTapScore = scores.getTapScore(tapScore);
-        if (score > prevBPMScore) {
-            scores.saveScore(bpm, score);
-            scores.setNewHighScoreBPM(true);
-        }
+        int result = scores.addScore(seekBar.getProgress(), tapCount, difficulty.getLabel());
+        isHighScore = (result == 1);
 
-        EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
-            .setTitle("Off time!")
-            .setPositiveBtnText("Try again?")
-            .setCancelableOnTouchOutside(false)
-            .OnPositiveClicked(new EZDialogListener() {
-                @Override
-                public void OnClick() {
-                    restartGame(null);
-                }
-            })
-            .setBackgroundColor(getResources().getColor(R.color.splash_blue));
-        if (scores.isNewHighScoreBPM()) {
-            gameOverMsg += "New high score for this BPM!\n";
-        }
-        if (scores.isNewHighScoreTaps()) {
-            gameOverMsg += "New high score for this amount of taps!\n";
-        }
-        dialogBuilder.setMessage(gameOverMsg);
-        ((EZDialog.Builder) dialogBuilder).build();
+//        EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
+//            .setTitle("Off time!")
+//            .setPositiveBtnText("Try again?")
+//            .setCancelableOnTouchOutside(false)
+//            .OnPositiveClicked(new EZDialogListener() {
+//                @Override
+//                public void OnClick() {
+//                    restartGame(null);
+//                }
+//            })
+//            .setBackgroundColor(getResources().getColor(R.color.splash_blue));
+//        if (isHighScore) {
+//            gameOverMsg += "New high score!\n";
+//        }
+//        dialogBuilder.setMessage(gameOverMsg);
+//        ((EZDialog.Builder) dialogBuilder).build();
     }
 }
 
