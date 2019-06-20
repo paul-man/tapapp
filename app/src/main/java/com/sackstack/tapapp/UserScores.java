@@ -17,25 +17,36 @@ import java.util.Arrays;
 public class UserScores extends SQLiteOpenHelper {
 
     private static final String TAG = "UserScores";
-
+    private static final String DATABASE_NAME = "scores.db";
+    private static final int DATABASE_VERSION = 1;
     private static final String TABLE_NAME = "scores";
     private static final String COL_BPM = "bpm";
     private static final String COL_TAPS = "taps";
     private static final String COL_TIME = "time";
     private static final String COL_DIFFICULTY = "difficulty";
 
+    // Database creation sql statement
+    private static final String DATABASE_CREATE = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+            COL_BPM + " INTEGER NOT NULL, " +
+            COL_TAPS + " INTEGER NOT NULL, " +
+            COL_TIME + " INTEGER NOT NULL, " +
+            COL_DIFFICULTY + " TEXT NOT NULL, " +
+            "PRIMARY KEY ("+COL_BPM+", "+COL_DIFFICULTY+"))";
 
     public UserScores(Context context) {
-        super(context, TABLE_NAME, null, 1);
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
-    public void onCreate(SQLiteDatabase db) {
-        createUserScoresTable(db);
+    public void onCreate(SQLiteDatabase database) {
+        database.execSQL(DATABASE_CREATE);
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int i, int i1) {
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.w(UserScores.class.getName(),
+                "Upgrading database from version " + oldVersion + " to "
+                        + newVersion + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(db);
     }
@@ -82,39 +93,43 @@ public class UserScores extends SQLiteOpenHelper {
     }
 
     public int[] getMaxBPM(String difficulty) {
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         Cursor data = null;
         int taps = -1;
         int[] result = new int[2];
         Arrays.fill(result, -1);
-        String query = "SELECT * FROM "+TABLE_NAME+" WHERE bpm = (SELECT max(bpm) FROM "+TABLE_NAME+") AND difficulty = \""+difficulty+"\"";
-            data = db.rawQuery(query, null);
-            if(data.getCount() > 0) {
-                data.moveToFirst();
-                result[0] = data.getInt(data.getColumnIndex("bpm"));
-                result[1] = data.getInt(data.getColumnIndex("taps"));
-                return result;
-            }
+        String query = "SELECT * FROM "+TABLE_NAME+" WHERE bpm = (SELECT max(bpm) FROM "+TABLE_NAME+" WHERE difficulty = \""+difficulty+"\") AND difficulty = \""+difficulty+"\"";
+        Log.d(TAG, "getMaxBPM: ("+query+")");
+        data = db.rawQuery(query, null);
+        Log.d(TAG, "MaxBPM data: ("+data.getCount()+")");
+        if(data.getCount() > 0) {
+            data.moveToFirst();
+            result[0] = data.getInt(data.getColumnIndex("bpm"));
+            result[1] = data.getInt(data.getColumnIndex("taps"));
             return result;
+        }
+        return result;
 
     }
 
     public int[] getMaxTaps(String difficulty) {
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         Cursor data = null;
         int taps = -1;
         int[] result = new int[2];
         Arrays.fill(result, -1);
-        String query = "SELECT * FROM "+TABLE_NAME+" WHERE taps = (SELECT max(taps) FROM "+TABLE_NAME+") AND difficulty = \""+difficulty+"\"";
+        String query = "SELECT * FROM "+TABLE_NAME+" WHERE taps = (SELECT max(taps) FROM "+TABLE_NAME+" WHERE difficulty = \""+difficulty+"\") AND difficulty = \""+difficulty+"\"";
 
-            data = db.rawQuery(query, null);
-            if(data.getCount() > 0) {
-                data.moveToFirst();
-                result[0] = data.getInt(data.getColumnIndex("bpm"));
-                result[1] = data.getInt(data.getColumnIndex("taps"));
-                return result;
-            }
+        Log.d(TAG, "getMaxTaps: ("+query+")");
+        data = db.rawQuery(query, null);
+        Log.d(TAG, "MaxTaps data: ("+data.getCount()+")");
+        if(data.getCount() > 0) {
+            data.moveToFirst();
+            result[0] = data.getInt(data.getColumnIndex("bpm"));
+            result[1] = data.getInt(data.getColumnIndex("taps"));
             return result;
+        }
+        return result;
 
     }
 
@@ -123,7 +138,7 @@ public class UserScores extends SQLiteOpenHelper {
      * @return
      */
     public Cursor getData(){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_NAME;
         Cursor data = db.rawQuery(query, null);
         return data;
@@ -134,7 +149,7 @@ public class UserScores extends SQLiteOpenHelper {
      * @return
      */
     public int getBPMScore(int bpm, String difficulty){
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = this.getReadableDatabase();
         Cursor data = null;
         int taps = -1;
         String query = "SELECT taps FROM " + TABLE_NAME +
