@@ -1,8 +1,14 @@
 package com.sackstack.tapapp;
 
 // Java imports
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 
 // Android imports
@@ -53,12 +59,14 @@ public class MainActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Difficulty difficulty;
     private Spinner difficultySpinner;
-    
+    private String appVersion = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initDifficulty();
+        initAppVersion();
         scores = new UserScores(MainActivity.this);
         seekBar = new SeekBar((IndicatorSeekBar) findViewById(R.id.seekBar), MainActivity.this);
         initCurveAlgo(difficulty, seekBar.getMax(), seekBar.getMin());
@@ -67,6 +75,25 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         initAds();
         startupDialog();
+    }
+
+    private void initAppVersion() {
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            appVersion = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        Log.d("APP", "App version: " + appVersion);
+
+        SharedPreferences prefs = this.getSharedPreferences("com.sackstack.settings", Context.MODE_PRIVATE);
+        String storedAppVersion = prefs.getString("appVersion", "");
+
+        if (storedAppVersion != appVersion) {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("appVersion", appVersion);
+            editor.commit();
+        }
     }
 
     public void initDifficulty() {
@@ -181,15 +208,34 @@ public class MainActivity extends AppCompatActivity {
         return Character.toUpperCase(line.charAt(0)) + line.substring(1);
     }
 
+    private String milliToDuration(long millis) {
+        Log.d("Duration", "millis: " + millis);
+        String duration;
+        long minuteMillis = 60000;
+        NumberFormat formatter = new DecimalFormat("#0.00");
+        if (millis < minuteMillis) {
+            formatter.format(millis / 1000.0);
+            duration = formatter.format(millis / 1000.0) + "s";
+        } else {
+            long minutes = millis / minuteMillis;
+            millis = millis - (minutes * minuteMillis);
+            duration = minutes + "m:" + formatter.format(millis / 1000.0) + "s";
+        }
+        return duration;
+    }
+
     private void startupDialog() {
         int[] maxBPMResults = scores.getMaxBPM(difficulty.getLabel());
         int[] maxTapsResults = scores.getMaxTaps(difficulty.getLabel());
+        int[] maxTimeResults = scores.getMaxTime(difficulty.getLabel());
+        String duration = milliToDuration(maxTimeResults[2]);
         String scoreMsg = capitalize(difficulty.getLabel())+"\n\n";
         if (maxBPMResults[0] == -1 || maxTapsResults[0] == -1) {
             scoreMsg += "No Scores yet!";
         } else {
-            scoreMsg += "Best BPM:\n" + maxBPMResults[0] + " with " + maxBPMResults[1] + " taps\n";
-            scoreMsg += "Best Taps:\n" + maxTapsResults[1] + " at " + maxTapsResults[0] + " BPM\n";
+            scoreMsg += "Highest BPM:  \n" + maxBPMResults[0] + " with " + maxBPMResults[1] + " taps\n\n\n";
+            scoreMsg += "Most Taps:    \n" + maxTapsResults[1] + " at " + maxTapsResults[0] + " BPM\n\n\n";
+            scoreMsg += "Longest round:\n" + duration + " at " + maxTimeResults[0] + " BPM with "+maxTimeResults[1]+" taps";
         }
 
 

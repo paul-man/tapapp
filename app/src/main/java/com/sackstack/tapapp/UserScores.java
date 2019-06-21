@@ -74,7 +74,7 @@ public class UserScores extends SQLiteOpenHelper {
             return 0;
         }
         SQLiteDatabase db = this.getWritableDatabase();
-        int time = (60 / bpm) * 1000 * taps;
+        int time = (int)((60.0 / bpm) * 1000.0 * taps);
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_BPM, bpm);
         contentValues.put(COL_TAPS, taps);
@@ -90,6 +90,25 @@ public class UserScores extends SQLiteOpenHelper {
         } else {
             return 1;
         }
+    }
+
+
+    public void fixScoreDurations() {
+        SQLiteDatabase dbRead = this.getReadableDatabase();
+        SQLiteDatabase dbWrite = this.getWritableDatabase();
+        Cursor cursor = dbRead.rawQuery("SELECT * FROM \"+TABLE_NAME+\" WHERE time = 0\"",null);
+        if (cursor.moveToFirst()) {
+            while (!cursor.isAfterLast()) {
+                int bpm = cursor.getInt(cursor.getColumnIndex(COL_BPM));
+                int taps = cursor.getInt(cursor.getColumnIndex(COL_TAPS));
+                int difficulty = cursor.getInt(cursor.getColumnIndex(COL_DIFFICULTY));
+                int time = (int)((60.0 / bpm) * 1000.0 * taps);
+                String strSQL = "UPDATE "+TABLE_NAME+" SET time = "+time+" WHERE bpm = "+bpm+" AND taps = "+taps+" AND difficulty = "+difficulty+" AND time = 0";
+                dbWrite.execSQL(strSQL);
+                cursor.moveToNext();
+            }
+        }
+
     }
 
     public int[] getMaxBPM(String difficulty) {
@@ -130,7 +149,27 @@ public class UserScores extends SQLiteOpenHelper {
             return result;
         }
         return result;
+    }
 
+    public int[] getMaxTime(String difficulty) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor data = null;
+        int taps = -1;
+        int[] result = new int[3];
+        Arrays.fill(result, -1);
+        String query = "SELECT * FROM "+TABLE_NAME+" WHERE time = (SELECT max(time) FROM "+TABLE_NAME+" WHERE difficulty = \""+difficulty+"\") AND difficulty = \""+difficulty+"\"";
+
+        Log.d(TAG, "getMaxTime: ("+query+")");
+        data = db.rawQuery(query, null);
+        Log.d(TAG, "MaxTime data: ("+data.getCount()+")");
+        if(data.getCount() > 0) {
+            data.moveToFirst();
+            result[0] = data.getInt(data.getColumnIndex("bpm"));
+            result[1] = data.getInt(data.getColumnIndex("taps"));
+            result[2] = data.getInt(data.getColumnIndex("time"));
+            return result;
+        }
+        return result;
     }
 
     /**
