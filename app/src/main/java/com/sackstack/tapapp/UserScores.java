@@ -35,6 +35,7 @@ public class UserScores extends SQLiteOpenHelper {
 
     public UserScores(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        fixScoreDurations();
     }
 
     @Override
@@ -74,7 +75,8 @@ public class UserScores extends SQLiteOpenHelper {
             return 0;
         }
         SQLiteDatabase db = this.getWritableDatabase();
-        int time = (int)((60.0 / bpm) * 1000.0 * taps);
+//        int time = (int)((60.0 / bpm) * 1000.0 * taps);
+        int time = (60 / bpm) * 1000 * taps;
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_BPM, bpm);
         contentValues.put(COL_TAPS, taps);
@@ -96,14 +98,17 @@ public class UserScores extends SQLiteOpenHelper {
     public void fixScoreDurations() {
         SQLiteDatabase dbRead = this.getReadableDatabase();
         SQLiteDatabase dbWrite = this.getWritableDatabase();
-        Cursor cursor = dbRead.rawQuery("SELECT * FROM \"+TABLE_NAME+\" WHERE time = 0\"",null);
+        Cursor cursor = dbRead.rawQuery("SELECT * FROM "+TABLE_NAME+" WHERE time = 0",null);
+        Log.d(TAG, "Empty duration count: " + cursor.getCount());
         if (cursor.moveToFirst()) {
             while (!cursor.isAfterLast()) {
                 int bpm = cursor.getInt(cursor.getColumnIndex(COL_BPM));
                 int taps = cursor.getInt(cursor.getColumnIndex(COL_TAPS));
-                int difficulty = cursor.getInt(cursor.getColumnIndex(COL_DIFFICULTY));
+                String difficulty = cursor.getString(cursor.getColumnIndex(COL_DIFFICULTY));
                 int time = (int)((60.0 / bpm) * 1000.0 * taps);
-                String strSQL = "UPDATE "+TABLE_NAME+" SET time = "+time+" WHERE bpm = "+bpm+" AND taps = "+taps+" AND difficulty = "+difficulty+" AND time = 0";
+                String strSQL = "UPDATE "+TABLE_NAME+" SET time = "+time+" WHERE bpm = "+bpm+" AND taps = "+taps+" AND difficulty = \""+difficulty+"\" AND time = 0";
+                Log.d(TAG, "fixScoreDurations: bpm."+bpm +" taps."+taps + " difficulty."+difficulty);
+                Log.d(TAG, "SQL: " + strSQL);
                 dbWrite.execSQL(strSQL);
                 cursor.moveToNext();
             }

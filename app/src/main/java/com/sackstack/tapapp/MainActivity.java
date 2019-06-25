@@ -233,8 +233,8 @@ public class MainActivity extends AppCompatActivity {
         if (maxBPMResults[0] == -1 || maxTapsResults[0] == -1) {
             scoreMsg += "No Scores yet!";
         } else {
-            scoreMsg += "Highest BPM:  \n" + maxBPMResults[0] + " with " + maxBPMResults[1] + " taps\n\n\n";
-            scoreMsg += "Most Taps:    \n" + maxTapsResults[1] + " at " + maxTapsResults[0] + " BPM\n\n\n";
+            scoreMsg += "Highest BPM:\n" + maxBPMResults[0] + " with " + maxBPMResults[1] + " taps\n\n\n";
+            scoreMsg += "Most Taps:\n" + maxTapsResults[1] + " at " + maxTapsResults[0] + " BPM\n\n\n";
             scoreMsg += "Longest round:\n" + duration + " at " + maxTimeResults[0] + " BPM with "+maxTimeResults[1]+" taps";
         }
 
@@ -263,13 +263,13 @@ public class MainActivity extends AppCompatActivity {
         gracePeriod = getGracePeriod(seekBar.getProgress());
         long now = System.currentTimeMillis();
         float tapDelay = (float)(now - lastTapTime);
-        tapCount++;
 
         if (lastTapTime == 0) {
             originalTapTime = now;
             seekBar.setEnabled(false);
             tapBtn.setText("Tap!");
         } else {
+            tapCount++;
             if ( tapDelay < ((float)milliBPM - gracePeriod)) {// || (float)milliBPM > (delay + allowedDeviation)) {
                 gameOver("fast");
                 return;
@@ -321,6 +321,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("GAMEOVER", "Error cancelling tapTimer");
         }
+        String dialogTitle = "Off Time!";
+        if (reason == "slow") {
+            dialogTitle = "Too Slow!";
+        } else if (reason == "fast") {
+            dialogTitle = "Too Fast!";
+        }
         tapTimer = null;
         seekBar.pauseIndicatorAnim();
         boolean isHighScore;
@@ -329,8 +335,8 @@ public class MainActivity extends AppCompatActivity {
         isHighScore = (result == 1);
 
         EZDialog.Builder dialogBuilder = new EZDialog.Builder(this)
-            .setTitle("Off time!")
-            .setPositiveBtnText("Try again?")
+            .setTitle(dialogTitle)
+            .setPositiveBtnText("Try again")
             .setCancelableOnTouchOutside(false)
             .OnPositiveClicked(new EZDialogListener() {
                 @Override
