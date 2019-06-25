@@ -29,7 +29,17 @@
                     android:paddingTop="5dp"
                     android:background="@drawable/refresh"
                     android:onClick="restartGame" />
-
+                <Spinner
+                    android:id="@+id/difficulty_spinner"
+                    android:layout_width="150dp"
+                    android:layout_height="35dp"
+                    android:gravity="center"
+                    android:background="@color/color_blue"
+                    android:layout_centerInParent="true"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/colorAccent"
+                    android:entries="@array/difficulties" />
                 <Button
                     android:id="@+id/score_sprite"
                     android:layout_alignParentRight="true"
@@ -51,15 +61,6 @@
             android:gravity="center"
             />
 
-
-            <!--<TextView-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:text="How well can you keep time?"-->
-                <!--android:gravity="center"-->
-                <!--android:textSize="32dp"-->
-                <!--android:textColor="@color/dark_gray" />-->
-
             <com.warkiz.widget.IndicatorStayLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -70,10 +71,10 @@
                     app:isb_indicator_color="@color/white"
                     app:isb_indicator_text_color="@color/colorAccent"
                     app:isb_indicator_text_size="18sp"
-                    app:isb_max="180"
-                    app:isb_min="30.0"
+                    app:isb_max="200"
+                    app:isb_min="20.0"
                     app:isb_only_thumb_draggable="false"
-                    app:isb_progress="105"
+                    app:isb_progress="110"
                     app:isb_seek_smoothly="true"
                     app:isb_show_indicator="rounded_rectangle"
                     app:isb_thumb_color="@color/colorAccent"
@@ -108,15 +109,6 @@
                     <!--android:textColor="@color/dark_gray"/>-->
             <!--</LinearLayout>-->
 
-            <TextView
-                android:id="@+id/delay_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:text=""
-                android:textColor="@color/dark_gray"
-                android:textSize="30sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
